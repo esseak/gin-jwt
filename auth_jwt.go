@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"errors"
 	"io/ioutil"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"gopkg.in/dgrijalva/jwt-go.v3"
 )
 
 // GinJWTMiddleware provides a Json-Web-Token authentication implementation. On failure, a 401 HTTP response
@@ -312,12 +312,17 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 		return
 	}
 
+	buf, _ := ioutil.ReadAll(c.Request.Body)
+	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+
 	var loginVals Login
 
 	if c.ShouldBindWith(&loginVals, binding.JSON) != nil {
 		mw.unauthorized(c, http.StatusBadRequest, mw.HTTPStatusMessageFunc(ErrMissingLoginValues, c))
 		return
 	}
+
+	c.Request.Body = rdr1
 
 	if mw.Authenticator == nil {
 		mw.unauthorized(c, http.StatusInternalServerError, mw.HTTPStatusMessageFunc(ErrMissingAuthenticatorFunc, c))
