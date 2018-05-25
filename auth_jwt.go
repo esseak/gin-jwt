@@ -314,15 +314,17 @@ func (mw *GinJWTMiddleware) LoginHandler(c *gin.Context) {
 
 	buf, _ := ioutil.ReadAll(c.Request.Body)
 	rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+	rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
 
 	var loginVals Login
+	c.Request.Body = rdr1
 
 	if c.ShouldBindWith(&loginVals, binding.JSON) != nil {
 		mw.unauthorized(c, http.StatusBadRequest, mw.HTTPStatusMessageFunc(ErrMissingLoginValues, c))
 		return
 	}
 
-	c.Request.Body = rdr1
+	c.Request.Body = rdr2
 
 	if mw.Authenticator == nil {
 		mw.unauthorized(c, http.StatusInternalServerError, mw.HTTPStatusMessageFunc(ErrMissingAuthenticatorFunc, c))
